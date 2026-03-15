@@ -24,5 +24,28 @@ services:
       - host.docker.internal:host-gateway
     tty: true
 
+  #static content backend
+  backend:
+    image: python:3.12-alpine
+    working_dir: /var/www
+    volumes:
+      - ./python:/var/www
+    command: python server.py
+
+  #http2 proxy-server
+  nghttpx:
+    build: ./nghttpx
+    container_name: nghttp2
+    depends_on:
+      - backend
+    ports:
+      - "8443:8443"
+    command:
+      - nghttpx
+      - --frontend=0.0.0.0,8443
+      - --backend=backend,8080
+      - --log-level=INFO
+      - /etc/nghttpx/server.key
+      - /etc/nghttpx/server.crt
 ###> symfony/mercure-bundle ###
 ###< symfony/mercure-bundle ###
